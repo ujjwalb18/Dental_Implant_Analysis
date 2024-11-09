@@ -69,7 +69,7 @@ pacman::p_load(tidyverse, readr, writexl, dplyr)
 
 ## Acknowledgments
 
-Special thanks to the University of Adelaide and my supervisor, Dr. Indu Bala, for their guidance and support.
+Special thanks to the University of Adelaide and my supervisor, Dr. Indu Bala, for her guidance and support.
 
 ---
 
