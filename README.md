@@ -74,7 +74,3 @@ Special thanks to the University of Adelaide and my supervisor, Dr. Indu Bala, f
 ---
 
 Feel free to report any issues or contribute to this project by submitting a pull request.
-
-```
-
-This `README.md` is structured to reflect your current data preprocessing scripts and the planned project scope, as outlined in your progress report.
