@@ -2,7 +2,7 @@ pacman::p_load(tidyverse,readr,writexl)
 
 folder_path <- "U:\\Downloads"
 
-loaded_cleaned_foitext <- read.csv("U:\\Downloads\\cleaned_foi_and_dev.csv")
+loaded_cleaned_foitext <- read.csv("//uofa//users$//users0//a1881450//Desktop//Resproj//Final_unmaster.csv")
 mastercsv <- read.csv("U:\\Downloads\\mdrfoitru2023.csv")
 
 final_dataset <- merge(loaded_cleaned_foitext, mastercsv, by = "MDR_REPORT_KEY", all.x = TRUE)
@@ -22,7 +22,7 @@ remove_unwanted_columns <- function(df) {
 final_dataset <- remove_unwanted_columns(final_dataset)
 
 # Save the final dataset to a new CSV file using write.csv
-write.csv(final_dataset, "U:\\Downloads\\final_merged_dataset.csv", row.names = FALSE)
+write.csv(final_dataset, "U:\\Downloads\\Final_Research_Dataset.csv", row.names = FALSE)
 
 distinct_report_keys <- length(unique(final_dataset$MDR_REPORT_KEY))
 print(paste("Number of distinct MDR_REPORT_KEY values:", distinct_report_keys))

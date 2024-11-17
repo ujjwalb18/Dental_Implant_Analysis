@@ -92,23 +92,6 @@ DEVICE2022 <- DEVICE2022[grepl("DENTAL IMPLANT", DEVICE2022$GENERIC_NAME, ignore
 DEVICE2023 <- DEVICE2023[grepl("DENTAL IMPLANT", DEVICE2023$GENERIC_NAME, ignore.case = TRUE), ]
 DEVICE2024 <- DEVICE2024[grepl("DENTAL IMPLANT", DEVICE2024$GENERIC_NAME, ignore.case = TRUE), ]
 
-# Convert DEVICE2023 columns to match DEVICE2022 column types
-for (col in names(DEVICE2023)) {
-  # Get the original class of the column from DEVICE2022
-  original_class <- class(DEVICE2022[[col]])
-  
-  # Convert the column in DEVICE2023 to the original class
-  if (original_class == "numeric") {
-    DEVICE2023[[col]] <- as.numeric(DEVICE2023[[col]])
-  } else if (original_class == "integer") {
-    DEVICE2023[[col]] <- as.integer(DEVICE2023[[col]])
-  } else if (original_class == "factor") {
-    DEVICE2023[[col]] <- as.factor(DEVICE2023[[col]])
-  } else if (original_class == "Date") {
-    DEVICE2023[[col]] <- as.Date(DEVICE2023[[col]], format = "%Y-%m-%d")
-  } # Add more types if necessary
-}
-
 # Now combine all the device data frames into one
 combined_devices <- bind_rows(
   DEVICE2016, DEVICE2017, DEVICE2018, DEVICE2019, DEVICE2020, 
@@ -188,14 +171,14 @@ rm(ft2016, ft2017, ft2018, ft2019, ft2020,
    ft2021, ft2022, ft2023, ft2024)
 
 combined_devices <- readRDS("combined_devices.rds")
-# final_df <- merge(combined_devices, combined_foitext, by = "MDR_REPORT_KEY", all.x = TRUE)
-final_df <- merge(combined_devices_updated, combined_foitext, by = "MDR_REPORT_KEY", all.x = TRUE)
+final_df <- merge(combined_devices, combined_foitext, by = "MDR_REPORT_KEY", all.x = TRUE)
+#final_df <- merge(combined_devices_updated, combined_foitext, by = "MDR_REPORT_KEY", all.x = TRUE)
 
-# Function to clean FOI_TEXT, remove starting patterns, and handle encoding issues
 clean_foi_text <- function(text) {
   # Ensuring text is in a recognizable encoding
   text <- iconv(text, to = "UTF-8", sub = "")
-  # Removing the starting patterns
+  
+  # Removing the starting patterns while retaining "THE"
   text <- gsub("^\\(B\\)\\(4\\): ", "", text)
   text <- gsub("^\\(B\\)\\(4\\)\\. \\(B\\)\\(6\\)\\. ", "", text)
   text <- gsub("^\\(B\\)\\(4\\)\\. \\(B\\)\\(4\\)\\. ", "", text)
@@ -219,45 +202,44 @@ clean_foi_text <- function(text) {
   text <- gsub("^\\(B\\)\\(6\\)- ", "", text)
   text <- gsub("^\\(B\\)\\(4\\), ", "", text)
   text <- gsub("^\\(B\\)\\(4\\) - ", "", text)
+  
+  # Handling patterns with "THE" while retaining "THE"
+  text <- gsub("^\\(B\\)\\(4 \\)- ", "", text)
+  text <- gsub("^\\(B\\(4\\)\\. ", "", text)
+  text <- gsub("^\\(B\\)\\(4\\) - ", "", text)
+  text <- gsub("^\\(B\\)\\(4\\)THE", "THE", text)  # Ensure "THE" is retained
+  text <- gsub("^\\(B\\)\\(4\\) THE", "THE", text)  # Ensure "THE" is retained
+  
   # Removing non-printable characters
   text <- gsub("[^[:print:]]", "", text)
+  
   # Removing leading spaces
   text <- gsub("^\\s+", "", text)
+  
   return(text)
 }
+
+clean_specific_foi_text <- function(text) {
+  # Remove patterns like "(B)(4) - " while preserving "THE"
+  text <- gsub("^\\(B\\)\\(4\\)\\s*-\\s*", "", text, perl = TRUE)
+  
+  # Remove the specific pattern "(B)(4) " while retaining "THE DENT"
+  text <- gsub("^\\(B\\)\\(4\\)\\s*", "", text)
+  
+  # Remove any leading spaces just in case
+  text <- gsub("^\\s+", "", text)
+  
+  return(text)
+}
+
 
 # Applying the function to clean FOI_TEXT column and store in a new variable
 cleaned_foitext <- final_df
 cleaned_foitext$FOI_TEXT <- sapply(cleaned_foitext$FOI_TEXT, clean_foi_text, USE.NAMES = FALSE)
+cleaned_foitext$FOI_TEXT <- sapply(cleaned_foitext$FOI_TEXT, clean_specific_foi_text, USE.NAMES = FALSE)
 
 entries_with_parenthesis <- cleaned_foitext[grep("^\\(", cleaned_foitext$FOI_TEXT), ]
 cleaned_foitext <- cleaned_foitext[-grep("^\\(", cleaned_foitext$FOI_TEXT), ]
 
 # Exporting our final data
-write.csv(cleaned_foitext, "//uofa//users$//users0//a1881450//Desktop//Resproj//cleaned_foi_and_dev_F.csv", row.names = FALSE)
-
-
-
-DEVICE2023_subset <- DEVICE2023 %>%
-  select(MDR_REPORT_KEY, DATE_RECEIVED)
-
-
-# Step 1: Convert MDR_REPORT_KEY in DEVICE2023_subset to double
-DEVICE2023_subset$MDR_REPORT_KEY <- as.numeric(DEVICE2023_subset$MDR_REPORT_KEY)
-
-# Step 2: Ensure that DATE_RECEIVED in DEVICE2023_subset is in date format
-DEVICE2023_subset$DATE_RECEIVED <- as.Date(DEVICE2023_subset$DATE_RECEIVED, format = "%Y/%m/%d")
-
-combined_devices_updated <- combined_devices %>%
-  left_join(DEVICE2023_subset, by = "MDR_REPORT_KEY", suffix = c("", "_2023"))
-
-combined_devices_updated$DATE_RECEIVED <- ifelse(
-  is.na(combined_devices_updated$DATE_RECEIVED),
-  combined_devices_updated$DATE_RECEIVED_2023,
-  combined_devices_updated$DATE_RECEIVED
-)
-combined_devices_updated <- combined_devices_updated %>%
-  select(-DATE_RECEIVED_2023)
-
-# Verify that NA values have been replaced
-sum(is.na(combined_devices_updated$DATE_RECEIVED))
+write.csv(cleaned_foitext, "//uofa//users$//users0//a1881450//Desktop//Resproj//Final_unmaster.csv", row.names = FALSE)
