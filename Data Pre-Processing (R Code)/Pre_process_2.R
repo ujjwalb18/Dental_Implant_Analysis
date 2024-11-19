@@ -21,6 +21,9 @@ remove_unwanted_columns <- function(df) {
 # Apply the function to the final dataset
 final_dataset <- remove_unwanted_columns(final_dataset)
 
+# Removing NULL values in FOI_TEXT
+final_dataset <- final_db[!is.na(final_dataset$FOI_TEXT), ]
+
 # Save the final dataset to a new CSV file using write.csv
 write.csv(final_dataset, "U:\\Downloads\\Final_Research_Dataset.csv", row.names = FALSE)
 
